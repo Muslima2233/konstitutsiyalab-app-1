@@ -1,13 +1,12 @@
 import streamlit as st
 import os
 import requests
-import json
 
 # 🔐 Hugging Face API kaliti
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
-# 🧠 Ishlaydigan model (aniq mavjud)
-MODEL = "google/gemma-2b-it"
+# 🧠 Ishlaydigan bepul model
+MODEL = "meta-llama/Llama-3.2-1B-Instruct"
 API_URL = f"https://api-inference.huggingface.co/models/{MODEL}"
 HEADERS = {"Authorization": f"Bearer {HUGGINGFACE_API_KEY}"}
 
@@ -52,7 +51,7 @@ elif bo_lim == "Kazuslar":
             st.warning("Iltimos, mavzuni kiriting!")
         else:
             with st.spinner("AI kazus tayyorlayapti..."):
-                prompt = f"O‘zbekiston Respublikasi 2023-yilgi Konstitutsiyasi asosida '{topic}' mavzusida huquqiy kazus yozing. Holatni batafsil bayon qiling va oxirida tahlilini yozing."
+                prompt = f"O‘zbekiston Respublikasi 2023-yilgi Konstitutsiyasi asosida '{topic}' mavzusida murakkab huquqiy kazus yozing. Holatni real hayotga o‘xshatib yozing va oxirida tahlilini yozing."
                 data = query({"inputs": prompt})
                 
                 if isinstance(data, str):
