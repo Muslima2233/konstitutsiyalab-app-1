@@ -11,7 +11,7 @@ if not api_key:
     st.stop()
 
 # Model nomi (ishlaydigan model)
-model = "tiiuae/falcon-7b-instruct"
+model = "mistralai/Mistral-7B-Instruct-v0.3"
 api_url = f"https://api-inference.huggingface.co/models/{model}"
 headers = {"Authorization": f"Bearer {api_key}"}
 
