@@ -5,9 +5,9 @@ from huggingface_hub import InferenceClient
 # 🔐 Hugging Face API kalitini olish
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
-# 🧠 Ishlaydigan modelni ulaymiz
+# 🧠 Ishlaydigan modelni ulaymiz (Llama3 model)
 client = InferenceClient(
-    model="mistralai/Mixtral-8x7B-Instruct-v0.1",
+    model="meta-llama/Llama-3.1-8B-Instruct",
     token=HUGGINGFACE_API_KEY
 )
 
@@ -31,9 +31,9 @@ if section == "Testlar":
             with st.spinner("AI test tayyorlayapti..."):
                 prompt = f"O‘zbekiston Respublikasi Konstitutsiyasi asosida '{topic}' mavzusida 5 ta test savoli yozing. Har bir savol uchun 4 ta variant (A–D) yozing va to‘g‘ri javobni oxirida 'To‘g‘ri javob:' deb belgilang."
                 response = client.text_generation(
-                    prompt=prompt,
+                    prompt,
                     max_new_tokens=700,
-                    temperature=0.7
+                    temperature=0.7,
                 )
                 st.session_state.generated_test = response.generated_text.strip()
             st.success("✅ Test tayyor bo‘ldi!")
@@ -50,7 +50,7 @@ if section == "Testlar":
             with st.spinner("AI javoblaringizni tekshirmoqda..."):
                 check_prompt = f"Quyidagi testlar va foydalanuvchi javoblarini solishtirib, nechta to‘g‘ri javob bo‘lganini aniqlang va baho qo‘ying (foiz bilan):\n\nTestlar:\n{st.session_state.generated_test}\n\nFoydalanuvchi javoblari:\n{user_answers}"
                 result = client.text_generation(
-                    prompt=check_prompt,
+                    check_prompt,
                     max_new_tokens=500,
                     temperature=0.3
                 )
@@ -69,7 +69,7 @@ elif section == "Kazuslar":
             with st.spinner("AI kazus tayyorlayapti..."):
                 prompt = f"O‘zbekiston Respublikasi 2023-yilgi Konstitutsiyasi asosida '{topic}' mavzusida murakkab huquqiy kazus yozing. Kazus real hayotga o‘xshash bo‘lsin va oxirida uning tahlilini yozing."
                 response = client.text_generation(
-                    prompt=prompt,
+                    prompt,
                     max_new_tokens=800,
                     temperature=0.8
                 )
