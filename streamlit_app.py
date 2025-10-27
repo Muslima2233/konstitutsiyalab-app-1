@@ -2,11 +2,14 @@ import streamlit as st
 import os
 from huggingface_hub import InferenceClient
 
-# 🔐 Hugging Face API kalitini olamiz (GitHub Secrets orqali)
+# 🔐 Hugging Face API kalitini olish
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
-# API orqali AI mijozini chaqirish
-client = InferenceClient(api_key=HUGGINGFACE_API_KEY)
+# AI modelga ulanamiz
+client = InferenceClient(
+    model="tiiuae/falcon-7b-instruct",
+    token=HUGGINGFACE_API_KEY
+)
 
 st.title("🇺🇿 Konstitutsiya Asosidagi AI Platforma")
 
@@ -15,14 +18,11 @@ section = st.sidebar.radio("Tanlang", ["Testlar", "Kazuslar", "Muhim ma’lumotl
 
 if section == "Testlar":
     st.header("🧠 Konstitutsiya bo‘yicha test yaratish")
-    topic = st.text_input("Test mavzusini kiriting (masalan: 'O‘zbekiston Respublikasi Prezidenti')")
+    topic = st.text_input("Test mavzusini kiriting (masalan: 'Prezident vakolatlari')")
     if st.button("Test yaratish"):
         with st.spinner("AI test tayyorlayapti..."):
-            response = client.text_generation(
-                model="gpt2",  # vaqtincha oddiy model, keyin kuchlisiga almashtiramiz
-                prompt=f"O‘zbekiston Respublikasi Konstitutsiyasi asosida {topic} mavzusi bo‘yicha 5 ta test savoli tuz.",
-                max_new_tokens=300
-            )
+            prompt = f"O‘zbekiston Respublikasi 2023-yilgi Konstitutsiyasi asosida {topic} mavzusi bo‘yicha 5 ta test savoli va javoblarini tuz."
+            response = client.text_generation(prompt=prompt, max_new_tokens=500)
             st.write(response)
 
 elif section == "Kazuslar":
@@ -30,11 +30,8 @@ elif section == "Kazuslar":
     topic = st.text_input("Kazus mavzusini kiriting (masalan: 'Fuqarolik huquqi')")
     if st.button("Kazus yaratish"):
         with st.spinner("AI kazus tayyorlayapti..."):
-            response = client.text_generation(
-                model="gpt2",
-                prompt=f"O‘zbekiston Respublikasi Konstitutsiyasi asosida {topic} mavzusida bir murakkab huquqiy kazus yoz.",
-                max_new_tokens=300
-            )
+            prompt = f"O‘zbekiston Respublikasi 2023-yilgi Konstitutsiyasi asosida {topic} mavzusida bir huquqiy kazus yoz. Kazus murakkab, o‘ylantiradigan bo‘lsin, lekin javobi ham bo‘lsin."
+            response = client.text_generation(prompt=prompt, max_new_tokens=700)
             st.write(response)
 
 elif section == "Muhim ma’lumotlar":
@@ -43,9 +40,7 @@ elif section == "Muhim ma’lumotlar":
     - **Qabul qilingan sana:** 2023-yil 1-may  
     - **Bo‘limlar soni:** 7 ta  
     - **Moddalar soni:** 155 ta  
-    - **Muddatlar:** Prezident — 7 yilga, Senat a’zolari — 5 yilga.  
-    - **Qismlar:**  
-        - Konstitutsiyaning 1/3 qismi – Asosiy tamoyillar  
-        - 2/3 qismi – Davlat tuzilishi va inson huquqlari  
+    - **Prezident vakolati muddati:** 7 yil  
+    - **Qonun qabul qilish:** Qonun loyihasi qonunchilik palatasi tomonidan qabul qilinadi va Senat tomonidan ma’qullanadi.  
+    - **Asosiy tamoyillar:** Suverenitet, demokratiya, ijtimoiy adolat, qonun ustuvorligi.
     """)
-
