@@ -6,11 +6,11 @@ from huggingface_hub import InferenceClient
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
 if not HUGGINGFACE_API_KEY:
-    st.error("❌ Hugging Face API kaliti topilmadi. Replit Secrets'da 'HUGGINGFACE_API_KEY' nomi bilan kiriting.")
+    st.error("❌ Hugging Face API kaliti topilmadi. Streamlit Secrets'da 'HUGGINGFACE_API_KEY' sifatida kiriting.")
     st.stop()
 
-# 🧠 Ishlaydigan model (barqaror)
-MODEL_ID = "tiiuae/falcon-7b-instruct"
+# 🧠 Ishlaydigan model (text_generation uchun mos)
+MODEL_ID = "mistralai/Mistral-7B-Instruct-v0.2"
 client = InferenceClient(model=MODEL_ID, token=HUGGINGFACE_API_KEY)
 
 st.title("🇺🇿 Konstitutsiya Asosidagi AI Platforma")
@@ -29,17 +29,13 @@ if section == "Testlar":
     if st.button("Test yaratish"):
         with st.spinner("AI test tayyorlayapti..."):
             prompt = f"O‘zbekiston Respublikasi Konstitutsiyasi asosida '{topic}' mavzusida 5 ta test savoli yozing. Har bir savolda 4 ta variant (A–D) bo‘lsin va oxirida to‘g‘ri javobni yozing."
-            
-            # 🔧 So‘rov yuborish (stabil variant)
-            response = client.post(
-                json={
-                    "inputs": prompt,
-                    "parameters": {"max_new_tokens": 700, "temperature": 0.7}
-                }
+            response = client.text_generation(
+                prompt,
+                max_new_tokens=700,
+                temperature=0.7,
+                repetition_penalty=1.1
             )
-            text_output = response[0]["generated_text"].strip()
-            st.session_state.generated_test = text_output
-        
+            st.session_state.generated_test = response.strip()
         st.success("✅ Test tayyor bo‘ldi!")
 
     if st.session_state.generated_test:
@@ -53,16 +49,13 @@ if section == "Testlar":
         if st.button("Natijani tekshirish"):
             with st.spinner("AI javoblaringizni tekshirmoqda..."):
                 check_prompt = f"Quyidagi testlar va foydalanuvchi javoblarini solishtirib, nechta to‘g‘ri javob borligini aniqlang va foizda baholang:\n\n{st.session_state.generated_test}\n\nFoydalanuvchi javoblari:\n{user_answers}"
-                
-                response = client.post(
-                    json={
-                        "inputs": check_prompt,
-                        "parameters": {"max_new_tokens": 400, "temperature": 0.3}
-                    }
-                )
-                result_text = response[0]["generated_text"].strip()
+                result = client.text_generation(
+                    check_prompt,
+                    max_new_tokens=400,
+                    temperature=0.3
+                ).strip()
                 st.success("✅ Natija:")
-                st.write(result_text)
+                st.write(result)
 
 # ----------------------------- KAZUSLAR -----------------------------
 elif section == "Kazuslar":
@@ -72,15 +65,12 @@ elif section == "Kazuslar":
     if st.button("Kazus yaratish"):
         with st.spinner("AI kazus tayyorlayapti..."):
             prompt = f"O‘zbekiston Respublikasi 2023-yilgi Konstitutsiyasi asosida '{topic}' mavzusida murakkab huquqiy kazus yozing. Kazus real hayotga o‘xshash bo‘lsin va oxirida uning tahlilini yozing."
-            
-            response = client.post(
-                json={
-                    "inputs": prompt,
-                    "parameters": {"max_new_tokens": 900, "temperature": 0.8}
-                }
+            response = client.text_generation(
+                prompt,
+                max_new_tokens=900,
+                temperature=0.8
             )
-            kazus_text = response[0]["generated_text"].strip()
-            st.write(kazus_text)
+            st.write(response.strip())
 
 # ----------------------------- MUHIM MA'LUMOTLAR -----------------------------
 elif section == "Muhim ma’lumotlar":
