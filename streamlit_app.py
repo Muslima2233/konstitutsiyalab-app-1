@@ -1,37 +1,61 @@
 import streamlit as st
 import os
-from huggingface_hub import InferenceClient
+import requests
 
-# 🔐 API kalitni olish
-HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
+st.title("🇺🇿 KonstitutsiyaLab – AI yordamida test va kazus yaratish")
 
-if not HUGGINGFACE_API_KEY:
-    st.error("❌ API kaliti topilmadi. Streamlit Secrets orqali kiriting.")
+# API kalitni olish
+api_key = os.getenv("HUGGINGFACE_API_KEY")
+if not api_key:
+    st.error("❌ API kaliti topilmadi. Iltimos, Streamlit Secrets ichiga HUGGINGFACE_API_KEY ni qo‘shing.")
     st.stop()
 
-# ✅ Ishlaydigan model (togethercomputer/LLaMA-2 7B)
-MODEL_ID = "HuggingFaceH4/zephyr-7b-beta"
-client = InferenceClient(model=MODEL_ID, token=HUGGINGFACE_API_KEY)
+# Model nomi (ishlaydigan model)
+model = "tiiuae/falcon-7b-instruct"
+api_url = f"https://api-inference.huggingface.co/models/{model}"
+headers = {"Authorization": f"Bearer {api_key}"}
 
-st.title("🇺🇿 Konstitutsiya Asosidagi AI Platforma")
+# Bo‘lim tanlash
+section = st.sidebar.radio("Bo‘limni tanlang:", ["🧠 Test yaratish", "⚖️ Kazus yaratish"])
 
-section = st.sidebar.radio("Bo‘limni tanlang:", ["Testlar", "Kazuslar"])
-
-if section == "Testlar":
-    st.header("🧠 Test yaratish")
-    topic = st.text_input("Test mavzusini kiriting:")
-
+# TEST BO‘LIMI
+if section == "🧠 Test yaratish":
+    st.subheader("Test yaratish")
+    topic = st.text_input("Mavzu nomini kiriting:")
     if st.button("Test yaratish"):
-        with st.spinner("AI test tayyorlayapti..."):
-            prompt = f"O‘zbekiston Respublikasi Konstitutsiyasi asosida '{topic}' mavzusida 5 ta test savoli yozing, har biri 4 variantli (A-D), oxirida to‘g‘ri javobni yozing."
-            response = client.text_generation(prompt, max_new_tokens=700)
-            st.text_area("Natija", response, height=300)
+        if not topic:
+            st.warning("Iltimos, mavzu nomini kiriting!")
+        else:
+            prompt = f"O‘zbekiston Respublikasi Konstitutsiyasi asosida '{topic}' mavzusida 5 ta test savoli tuzing. Har biri 4 ta variantli (A–D) bo‘lsin va oxirida to‘g‘ri javobni ko‘rsating."
+            with st.spinner("AI test tayyorlayapti..."):
+                payload = {"inputs": prompt, "parameters": {"max_new_tokens": 600, "temperature": 0.7}}
+                response = requests.post(api_url, headers=headers, json=payload)
+                if response.status_code == 200:
+                    result = response.json()
+                    try:
+                        st.text_area("Natija:", result[0]["generated_text"], height=400)
+                    except Exception:
+                        st.write(result)
+                else:
+                    st.error(f"Xato yuz berdi: {response.text}")
 
-elif section == "Kazuslar":
-    st.header("⚖️ Kazus yaratish")
+# KAZUS BO‘LIMI
+elif section == "⚖️ Kazus yaratish":
+    st.subheader("Kazus yaratish")
     topic = st.text_input("Kazus mavzusi:")
     if st.button("Kazus yaratish"):
-        with st.spinner("AI kazus tayyorlayapti..."):
-            prompt = f"O‘zbekiston Konstitutsiyasi asosida '{topic}' mavzusida huquqiy kazus yozing va uni tahlil qiling."
-            response = client.text_generation(prompt, max_new_tokens=700)
-            st.write(response)
+        if not topic:
+            st.warning("Iltimos, kazus mavzusini kiriting!")
+        else:
+            prompt = f"O‘zbekiston Respublikasi Konstitutsiyasi asosida '{topic}' mavzusida huquqiy kazus yozing va uni tahlil qiling."
+            with st.spinner("AI kazus tayyorlayapti..."):
+                payload = {"inputs": prompt, "parameters": {"max_new_tokens": 700, "temperature": 0.7}}
+                response = requests.post(api_url, headers=headers, json=payload)
+                if response.status_code == 200:
+                    result = response.json()
+                    try:
+                        st.text_area("Natija:", result[0]["generated_text"], height=400)
+                    except Exception:
+                        st.write(result)
+                else:
+                    st.error(f"Xato yuz berdi: {response.text}")
