@@ -2,12 +2,16 @@ import streamlit as st
 import os
 from huggingface_hub import InferenceClient
 
-# 🔐 Hugging Face API kalitini olish
+# 🔐 API kalitni olish
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
-# 🧠 Ishlaydigan modelni ulaymiz (Llama3 model)
+if not HUGGINGFACE_API_KEY:
+    st.error("❌ Hugging Face API kaliti topilmadi. Replit Secrets'da 'HUGGINGFACE_API_KEY' nomi bilan kiriting.")
+    st.stop()
+
+# 🧠 Ishlaydigan model (barqaror model)
 client = InferenceClient(
-    model="meta-llama/Llama-3.1-8B-Instruct",
+    model="google/gemma-2b-it",  # yoki: "tiiuae/falcon-7b-instruct"
     token=HUGGINGFACE_API_KEY
 )
 
@@ -16,7 +20,7 @@ st.title("🇺🇿 Konstitutsiya Asosidagi AI Platforma")
 st.sidebar.title("Bo‘limni tanlang:")
 section = st.sidebar.radio("Tanlang", ["Testlar", "Kazuslar", "Muhim ma’lumotlar"])
 
-# 🔹 TESTLAR BO‘LIMI
+# ----------------------------- TESTLAR -----------------------------
 if section == "Testlar":
     st.header("🧠 Konstitutsiya bo‘yicha test yaratish")
     topic = st.text_input("Test mavzusini kiriting (masalan: 'Prezident vakolatlari')")
@@ -25,18 +29,11 @@ if section == "Testlar":
         st.session_state.generated_test = ""
 
     if st.button("Test yaratish"):
-        if not topic.strip():
-            st.warning("Iltimos, test mavzusini kiriting.")
-        else:
-            with st.spinner("AI test tayyorlayapti..."):
-                prompt = f"O‘zbekiston Respublikasi Konstitutsiyasi asosida '{topic}' mavzusida 5 ta test savoli yozing. Har bir savol uchun 4 ta variant (A–D) yozing va to‘g‘ri javobni oxirida 'To‘g‘ri javob:' deb belgilang."
-                response = client.text_generation(
-                    prompt,
-                    max_new_tokens=700,
-                    temperature=0.7,
-                )
-                st.session_state.generated_test = response.generated_text.strip()
-            st.success("✅ Test tayyor bo‘ldi!")
+        with st.spinner("AI test tayyorlayapti..."):
+            prompt = f"O‘zbekiston Respublikasi Konstitutsiyasi asosida '{topic}' mavzusida 5 ta test savoli yozing. Har bir savolda 4 ta variant (A–D) bo‘lsin va oxirida to‘g‘ri javobni yozing."
+            response = client.text_generation(prompt, max_new_tokens=800, temperature=0.7)
+            st.session_state.generated_test = response.strip()
+        st.success("✅ Test tayyor bo‘ldi!")
 
     if st.session_state.generated_test:
         st.write("📋 **AI tomonidan yaratilgan testlar:**")
@@ -48,35 +45,23 @@ if section == "Testlar":
 
         if st.button("Natijani tekshirish"):
             with st.spinner("AI javoblaringizni tekshirmoqda..."):
-                check_prompt = f"Quyidagi testlar va foydalanuvchi javoblarini solishtirib, nechta to‘g‘ri javob bo‘lganini aniqlang va baho qo‘ying (foiz bilan):\n\nTestlar:\n{st.session_state.generated_test}\n\nFoydalanuvchi javoblari:\n{user_answers}"
-                result = client.text_generation(
-                    check_prompt,
-                    max_new_tokens=500,
-                    temperature=0.3
-                )
+                check_prompt = f"Quyidagi testlar va foydalanuvchi javoblarini solishtirib, nechta to‘g‘ri javob borligini aniqlang va foiz hisobida baholang:\n\n{st.session_state.generated_test}\n\nFoydalanuvchi javoblari:\n{user_answers}"
+                result = client.text_generation(check_prompt, max_new_tokens=400, temperature=0.3)
                 st.success("✅ Natija:")
-                st.write(result.generated_text.strip())
+                st.write(result.strip())
 
-# 🔹 KAZUSLAR BO‘LIMI
+# ----------------------------- KAZUSLAR -----------------------------
 elif section == "Kazuslar":
     st.header("⚖️ Huquqiy kazus yaratish")
     topic = st.text_input("Kazus mavzusini kiriting (masalan: 'Fuqarolik huquqi')")
 
     if st.button("Kazus yaratish"):
-        if not topic.strip():
-            st.warning("Iltimos, kazus mavzusini kiriting.")
-        else:
-            with st.spinner("AI kazus tayyorlayapti..."):
-                prompt = f"O‘zbekiston Respublikasi 2023-yilgi Konstitutsiyasi asosida '{topic}' mavzusida murakkab huquqiy kazus yozing. Kazus real hayotga o‘xshash bo‘lsin va oxirida uning tahlilini yozing."
-                response = client.text_generation(
-                    prompt,
-                    max_new_tokens=800,
-                    temperature=0.8
-                )
-                st.success("✅ Kazus tayyor bo‘ldi!")
-                st.write(response.generated_text.strip())
+        with st.spinner("AI kazus tayyorlayapti..."):
+            prompt = f"O‘zbekiston Respublikasi 2023-yilgi Konstitutsiyasi asosida '{topic}' mavzusida huquqiy kazus yozing. Kazus real holatga o‘xshasin va tahlilini yozing."
+            response = client.text_generation(prompt, max_new_tokens=900, temperature=0.8)
+            st.write(response.strip())
 
-# 🔹 MUHIM MA'LUMOTLAR BO‘LIMI
+# ----------------------------- MA'LUMOTLAR -----------------------------
 elif section == "Muhim ma’lumotlar":
     st.header("📘 Konstitutsiyaning muhim ma’lumotlari")
     st.markdown("""
